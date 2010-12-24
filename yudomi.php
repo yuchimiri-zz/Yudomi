@@ -33,10 +33,20 @@ class Yudomi {
     const STATUS_UPDATE_URL = "https://twitter.com/statuses/update.xml";
 
     /**
+     * データディレクトリ 
+     */
+    const DATA_DIR = "./data/";
+
+    /**
      * 発言リストが書かれたファイル
      */
-    const MESSAGES_FILENAME = "./data/messages.yml";
-    
+    const MESSAGES_FILENAME = "messages.yml";
+
+    /**
+     * イベントファイル
+     */
+    const EVENTS_FILENAME = "events.yml";
+   
     /**
      * タイムラインの取得を開始するIDを記録したファイル
      */
@@ -100,8 +110,7 @@ class Yudomi {
         $xml  = simplexml_load_string($user);
         $this->yudomi = $this->getProfile($xml);
 
-        // 発言リストを配列で取得
-        $this->messages = Spyc::YAMLLoad(self::MESSAGES_FILENAME);
+        $this->loadMessageFromYaml(EVENT);
 
         // 現在時刻（時分）取得
         $this->time = date("Hi");
@@ -122,6 +131,7 @@ class Yudomi {
             $rand_key = array_rand($messages[$this->time], 1);
 
             $message = "@".KARESHI." ".$messages[$this->time][$rand_key];
+
             $this->tweet($message);
             $this->uniq_id[] = KARESHI;
         }
@@ -299,4 +309,26 @@ class Yudomi {
 
         return $profile;
     }
+
+   /**
+    * メッセージを取得
+    * 
+    * @param boolean $use_event
+    */
+   private function loadMessageFromYaml($use_event) {
+       $yaml = null;
+       if ($use_event) {
+          $events = Spyc::YAMLLoad(self::DATA_DIR . self::EVENTS_FILENAME);
+	  $date = date('m-d');
+          if (array_key_exists($date, $events['events'])) {
+             $yaml = $events['events'][$date];
+          }
+       }
+
+       if (is_null($yaml)) {
+           $yaml = self::MESSAGES_FILENAME;
+       }
+
+       $this->messages = Spyc::YAMLLoad(self::DATA_DIR . $yaml);
+   }
 }
